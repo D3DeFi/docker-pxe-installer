@@ -1,0 +1,4 @@
+*.iso
+*.swp
+tftp/
+!tftp/.gitkeep

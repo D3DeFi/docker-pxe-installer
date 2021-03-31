@@ -1,0 +1,28 @@
+version: "3"
+services:
+  pxe:
+    image: ferrarimarco/pxe
+    volumes:
+      - ${PWD}/tftp/:/var/lib/tftpboot/:ro
+      - ${PWD}/dnsmasq.conf:/etc/dnsmasq.conf:ro
+    cap_add:
+      - NET_ADMIN
+    network_mode: "host"
+    entrypoint:
+      - "dnsmasq"
+      - "--no-daemon"
+      - "--conf-file=/etc/dnsmasq.conf"
+  iso:
+    image: python:3.9-alpine
+    volumes:
+      - ${PWD}/web:/data/web:ro
+    network_mode: "host"
+    entrypoint:
+      - "python3"
+      - "-m"
+      - "http.server"
+      - "--bind=0.0.0.0"
+      - "--directory=/data/web/"
+      - "8080"
+
+
