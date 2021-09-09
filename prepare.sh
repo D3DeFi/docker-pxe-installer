@@ -5,7 +5,7 @@
 LISTENIP=192.168.56.2:8080
 
 ISO_URL=http://releases.ubuntu.com/focal/
-ISO=ubuntu-20.04.2-live-server-amd64.iso
+ISO=ubuntu-20.04.3-live-server-amd64.iso
 PXELINUX=http://archive.ubuntu.com/ubuntu/dists/focal/main/installer-amd64/current/legacy-images/netboot/pxelinux.0
 LDLINUX=http://archive.ubuntu.com/ubuntu/dists/focal/main/installer-amd64/current/legacy-images/netboot/ldlinux.c32
 
@@ -16,7 +16,7 @@ test -d tftp || mkdir tftp
 
 # Download ISO
 echo "downloading ISO..."
-test -f web/$ISO || wget ${ISO_URL}/${ISO} -O web/$ISO -q --show-progress
+test -f web/$ISO || wget ${ISO_URL}/${ISO} -O web/$ISO --show-progress
 
 # Mount ISO and get initrd & vmlinuz so machine can boot to it
 echo "retrieving vmlinuz and initrd from ISO..."
@@ -28,8 +28,8 @@ rmdir tmp-mnt
 
 # Get additional required files
 echo "downloading pxelinux.0 and ldlinux.c32..."
-wget $PXELINUX -O tftp/pxelinux.0 -q --show-progress
-wget $LDLINUX -O tftp/ldlinux.c32 -q --show-progress
+wget $PXELINUX -O tftp/pxelinux.0 --show-progress
+wget $LDLINUX -O tftp/ldlinux.c32 --show-progress
 
 # Create default pxelinux configuration to direct servers to installer with cloud-init-bios
 echo "generating pxelinux.cfg/default..."
