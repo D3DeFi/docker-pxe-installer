@@ -1,0 +1,83 @@
+# Run prepare.sh first!
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pxe-installer
+  labels:
+    app: pxe-installer
+    component: pxe
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pxe-installer
+  template:
+    metadata:
+      labels:
+        app: pxe-installer
+    spec:
+      hostNetwork: true
+      containers:
+      - name: pxe
+        image: ferrarimarco/pxe:latest
+        command: ['dnsmasq']
+        args: ['--no-daemon', '--conf-file=/etc/dnsmasq.conf']
+        ports:
+        - containerPort: 67
+          protocol: UDP
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            add: ['NET_ADMIN']
+        volumeMounts:
+        - name: tftp-vol
+          mountPath: /var/lib/tftpboot/
+          readOnly: false
+        - name: pxe-cm-vol
+          mountPath: /etc/dnsmasq.conf
+          subPath: dnsmasq.conf
+          readOnly: true
+      - name: web
+        image: python:3.9-alpine
+        command: ['python3']
+        args: ['-m', 'http.server', '--bind=0.0.0.0', '--directory=/data/web', '8080']
+        ports:
+        - containerPort: 8080
+        volumeMounts:
+        - name: web-vol
+          mountPath: /data/web
+          readOnly: false
+      volumes:
+      - name: tftp-vol
+        hostPath:
+          path: /path/to/this/repo/docker-pxe-installer/tftp
+          type: Directory
+      - name: web-vol
+        hostPath:
+          path: /path/to/this/repo/docker-pxe-installer/web
+          type: Directory
+      - name: pxe-cm-vol
+        configMap:
+          name: pxe-installer-cm
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pxe-installer-cm
+data:
+  dnsmasq.conf: |
+    # DHCP range and boot file (defaults for LGA1 site - NYC ISP)
+    # These values are reserved in Infrastructure Numbers allocation document for this purpose
+    dhcp-range=192.168.56.100,192.168.56.200
+    dhcp-option=3,192.168.56.1
+    dhcp-option=6,8.8.8.8
+
+    ## No need to modify past this line
+    port=0                                      # Disable DNS Server
+    log-dhcp                                    # Enable DHCP logging
+    pxe-service=x86PC,"Network Boot",pxelinux   # Provide network boot option called "Network Boot"
+    dhcp-boot=pxelinux.0                        # What file to serve via BOOTP
+    enable-tftp                                 # Enable TFTP
+    tftp-root=/var/lib/tftpboot                 # Where to locate vmlinuz & initrd
+    user=root                                   # Run as root user
